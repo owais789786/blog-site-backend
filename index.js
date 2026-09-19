@@ -7,7 +7,8 @@ require('dotenv').config();
 const port = process.env.PORT || 3000;
 
 const connectDB = require('./src/config/db');
-const { logErrors, errorStatus, formatError, sendErrorResponse } = require('./src/middlewares/errorMiddleware');
+const { logErrors, errorStatus, formatError, sendErrorResponse } = require('./src/middlewares/error.middleware');
+const userRoutes = require('./src/routes/user.route');
 
 const typeDefs = `#graphql
     type Query{
@@ -29,11 +30,7 @@ async function startServer() {
     await connectDB();
 
     // Rest Routes ----
-    app.get('/api', (req, res) => {
-        res.json({
-            message: 'This is a Rest api route'
-        });
-    })
+    app.get('/api', userRoutes);
 
     // GraphQL Route ----
     const apolloServer = new ApolloServer({ typeDefs, resolvers });
@@ -43,7 +40,7 @@ async function startServer() {
     // Error Handling (always at last) ----
     app.use(logErrors, errorStatus, formatError, sendErrorResponse);
 
-    app.listen(port,()=>{
+    app.listen(port, () => {
         console.log(`REST: http://localhost:${port}/api`);
         console.log(`GraphQL: http://localhost:${port}/graphql`);
     });
