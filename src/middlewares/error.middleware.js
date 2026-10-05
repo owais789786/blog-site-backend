@@ -26,4 +26,4 @@ const sendErrorResponse = (err, req, res, next) => {
     });
 };
 
-module.exports = { logErrors, errorStatus, formatError, sendErrorResponse };
+    module.exports = { logErrors, errorStatus, formatError, sendErrorResponse };
