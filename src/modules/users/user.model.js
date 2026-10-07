@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema(
   {
@@ -59,6 +60,16 @@ const userSchema = new mongoose.Schema(
 // Virtual for fullName
 userSchema.virtual('name').get(function () {
   return `${this.firstName} ${this.lastName}`.trim();
+});
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  try {
+    this.password = await bcrypt.hash(this.password, 12);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

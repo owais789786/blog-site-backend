@@ -27,27 +27,40 @@ const resolvers = {
 
 async function startServer() {
     const app = express();
+    const cookieParser = require('cookie-parser');
     app.use(express.json());
+    app.use(cookieParser());
     app.set('trust proxy', 1);
-    app.use(cors());
+    app.use(cors({
+        origin: process.env.NODE_ENV === 'production' 
+            ? process.env.CLIENT_URL 
+            : 'http://localhost:5173',
+        credentials: true,
+    }));
     app.use(['/api', '/graphql'], apiLimiter);
     app.use(passport.initialize());
-
 
     // DB Connection ----
     await connectDB();
 
+    const postRoutes = require('./src/modules/posts/post.route');
+
     // Rest Routes ----
     app.use('/api/v1/user', userRoutes);
     app.use('/api/v1/auth', authRoutes);
+    app.use('/api/v1/posts', postRoutes);
 
     // GraphQL Route ----
-    const apolloServer = new ApolloServer({ typeDefs, resolvers });
+    const apolloServer = new ApolloServer({ 
+        typeDefs, 
+        resolvers,
+        introspection: process.env.NODE_ENV !== 'production'
+    });
     await apolloServer.start();
     app.use('/graphql', expressMiddleware(apolloServer));
 
     // Error Handling (always at last) ----
-    app.use(logErrors, errorStatus, formatError, sendErrorResponse);
+    app.use(errorStatus, logErrors, formatError, sendErrorResponse);
 
     app.listen(port, () => {
         console.log(`REST: http://localhost:${port}/api`);

@@ -1,14 +1,22 @@
 const logger = require('../utils/logger');
 
-// 1. Log error
-const logErrors = (err, req, res, next) => {
-    logger.error(`${req.method} ${req.url} - ${err.message}`);
+// 1. Determine status code and normalize duplicate-key errors
+const errorStatus = (err, req, res, next) => {
+    if (err.code === 11000) {
+        err.statusCode = 409;
+        err.message = 'An account with this email already exists.';
+    } else if (err.code === 'EBADCSRFTOKEN') {
+        err.statusCode = 403;
+        err.message = 'Invalid CSRF token. Please refresh the page.';
+    } else {
+        err.statusCode = err.statusCode || err.status || 500;
+    }
     next(err);
 };
 
-// 2. Determine status code
-const errorStatus = (err, req, res, next) => {
-    err.statusCode = err.statusCode || 500;
+// 2. Log error
+const logErrors = (err, req, res, next) => {
+    logger.error(`${req.method} ${req.url} - ${err.message}`);
     next(err);
 };
 
